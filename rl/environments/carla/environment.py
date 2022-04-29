@@ -967,9 +967,12 @@ class OneCameraCARLAEnvironment(CARLABaseEnvironment):
                                                     image_size_y=self.image_size[1],
                                                     sensor_tick=self.tick_time)
 
+    
+
         return dict(collision=SensorSpecs.collision_detector(callback=self.on_collision),
                     imu=SensorSpecs.imu(),
                     camera=camera_sensor,
+                    lidar=SensorSpecs.lidar(),
                     depth=depth_sensor)
 
     def on_collision(self, event: carla.CollisionEvent, penalty=1000.0):
@@ -1086,6 +1089,7 @@ class OneCameraCARLAEnvironment(CARLABaseEnvironment):
 
         # observations
         vehicle_obs = self._get_vehicle_features()
+        lidar_obs = self._get_lidar_raw_data()
         control_obs = self._control_as_vector()
         road_obs = self._get_road_features()
 
@@ -1135,8 +1139,12 @@ class OneCameraCARLAEnvironment(CARLABaseEnvironment):
     def _get_vehicle_features(self):
         imu_sensor = self.sensors['imu']
 
+        lidar_sensor = self.sensors['lidar']
+
         # vehicle's acceleration (also considers direction)
         acceleration = env_utils.magnitude(imu_sensor.accelerometer) * env_utils.sign(self.similarity)
+
+        raw_data = lidar_sensor.raw_data
 
         # vehicle's angular velocity
         angular_velocity = env_utils.magnitude(imu_sensor.gyroscope)
